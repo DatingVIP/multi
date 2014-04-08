@@ -132,3 +132,8 @@ The new remote can be used to build patched versions of ```php-src``` in the fol
     UPSTREAM=krakjoe VERSION=returntypehinting ./php.multi
 
 Setting ```UPSTREAM``` is only necessary on the first checkout, subsequent executions of ```php.multi``` do not require special action for versions built from additional sources.
+
+License
+=======
+
+http://opensource.org/licenses/lgpl-3.0.html
