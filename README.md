@@ -134,6 +134,5 @@ The new remote can be used to build patched versions of ```php-src``` in the fol
 Setting ```UPSTREAM``` is only necessary on the first checkout, subsequent executions of ```php.multi``` do not require special action for versions built from additional sources.
 
 License
-=======
-
-http://opensource.org/licenses/lgpl-3.0.html
+-------
+```multi``` is released under the terms of LGPL3.0, details can be found in LICENSE or online at http://opensource.org/licenses/lgpl-3.0.html
