@@ -41,6 +41,6 @@ with-vpx-dir=/usr
 with-iconv-dir=/usr
 with-pear
 dnl This libdir will obviously not be suitable on 32 bit systems
-dnl with-libdir=lib64
+with-libdir=lib64
 dnl This line configures apache module
-with-apxs2=/usr/bin/apxs
+dnl with-apxs2=/usr/bin/apxs
