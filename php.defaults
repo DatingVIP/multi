@@ -1,0 +1,46 @@
+dnl
+dnl This file should contain configuration defaults for PHP
+dnl 
+dnl Any line starting with dnl is ignored
+dnl
+dnl Disable all gives us a sensible default build for all configurations
+dnl allowing us to pick specifically what to enable, making pre-requisites
+dnl for all versions very nearly uniform
+disable-all
+dnl
+enable-libxml
+enable-dom=static
+enable-soap=static
+enable-xml
+enable-phar
+enable-mbstring
+enable-json
+enable-pdo
+enable-zip
+enable-fileinfo
+enable-session
+enable-simplexml
+enable-opcache
+enable-ctype
+enable-gd-native-ttf
+enable-tokenizer
+enable-hash
+enable-filter
+dnl
+with-zlib
+with-mysql=mysqlnd
+with-mysqli=mysqlnd
+with-pdo-mysql
+with-curl
+with-gd
+with-jpeg-dir=/usr
+with-mcrypt
+with-freetype-dir=/usr
+with-xpm-dir=/usr/lib64
+with-vpx-dir=/usr
+with-iconv-dir=/usr
+with-pear
+dnl This libdir will obviously not be suitable on 32 bit systems
+dnl with-libdir=lib64
+dnl This line configures apache module
+with-apxs2=/usr/bin/apxs

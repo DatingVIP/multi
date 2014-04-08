@@ -1,0 +1,434 @@
+#!/bin/bash
+######################################################################
+# Update multiple versions of PHP with one command ... because lazy! #
+######################################################################
+BASE=$PWD
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+[ "x$BUILD" != "x"    ] || BUILD=$BASE/php-build
+[ "x$VERSION" != "x"  ] || VERSION=$(ls $BUILD)
+[ "x$INI" != "x"      ] || INI=$BASE/php.ini
+[ "x$HOOKS" != "x"    ] || HOOKS=$BASE/hooks
+[ "x$LIBS" != "x"     ] || LIBS=$BASE/php.libs
+[ "x$DEFAULTS" != "x" ] || DEFAULTS=$BASE/php.defaults
+[ "x$GIT" != "x"      ] || GIT=git://git.php.net/php-src.git
+[ "x$UPSTREAM" != "x" ] || UPSTREAM=origin
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+[ "x$STEP" != "x"     ] || STEP=no
+[ "x$ONE" != "x"      ] || ONE=no
+[ "x$ZTS" != "x"      ] || ZTS="zts no-zts"
+[ "x$DBG" != "x"      ] || DBG="debug no-debug"
+[ "x$UPDATE" = "xno"  ] || UPDATE=yes
+[ "x$CHECK" = "xno"   ] || CHECK=yes
+[ "x$TARGET" != "x"   ] || TARGET=/opt/php
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+__msg() 
+{
+	echo -e "\033[0;32m${1}\033[0m"
+}
+
+__error()
+{
+	echo -e "\033[0;35m${1}\033[0m"
+}
+
+__defaults() 
+{
+	while read line
+	do
+		if [[ $line != dnl* ]]; then
+			echo " --$line"
+		fi
+	done < $DEFAULTS
+}
+
+__flags ()
+{
+	nz=(zts no-zts)
+	nd=(debug no-debug)
+	fz=(enable-maintainer-zts disable-maintainer-zts)
+	fd=(enable-debug disable-debug)
+	
+	for ((nzi=0; nzi < ${#nz[@]}; nzi++))
+	do
+		for ((ndi=0; ndi < ${#nd[@]}; ndi++))
+		do
+			if [ ${nz[$nzi]} == $1 ] &&
+			   [ ${nd[$ndi]} == $2 ]; then
+		       echo "--${fz[$nzi]} --${fd[$ndi]}"  
+		    fi
+		done
+	done
+}
+
+__pre()
+{
+	for LAYER in $(ls $HOOKS 2>/dev/null)
+	do
+		DIR=$HOOKS/$LAYER/pre.$1
+
+		if [ ! -d $DIR ]; then
+			continue
+		fi
+		
+		for HOOK in $(ls $DIR 2>/dev/null)
+		do
+			if [ ! -f $DIR/$HOOK ]; then
+				continue
+			fi
+			
+			SOURCE=$BUILD/$2 TARGET=$TARGET/$2/$3/$4 VERSION=$2 ZTS=$3 DBG=$4 source $DIR/$HOOK
+
+			if [ $? != 0 ]; then
+				__error "Failed to execute $DIR/$HOOK"
+				return 6
+			fi
+		done
+	done
+
+	return 0
+}
+
+__post()
+{
+	for LAYER in $(ls $HOOKS 2>/dev/null)
+	do
+		DIR=$HOOKS/$LAYER/post.$1
+		
+		if [ ! -d $DIR ]; then
+			continue
+		fi
+		
+		for HOOK in $(ls $DIR 2>/dev/null)
+		do
+			if [ ! -f $DIR/$HOOK ]; then
+				continue
+			fi
+			
+			SOURCE=$BUILD/$2 TARGET=$TARGET/$2/$3/$4 VERSION=$2 ZTS=$3 DBG=$4 source $DIR/$HOOK
+
+			if [ $? != 0 ]; then
+				__error "Failed to execute $DIR/$HOOK"
+				return 6
+			fi
+		done
+	done
+
+	return 0
+}
+
+__change()
+{
+	if [ ! -d $1 ]; then
+		__error "Failed to change to $1, not a directory"
+		return 10
+	fi
+	
+	cd $1 2>&1 >/dev/null
+	
+	if [ $? != 0 ]; then
+		__error "Failed to change to $1, error occured"
+		return 10
+	fi
+	
+	return 0
+}
+
+__update () 
+{
+	__pre update $1
+
+	__msg "Updating $BUILD/.src"
+	
+	if [ -d "$BUILD/.src" ]; then
+		cd "$BUILD/.src"
+		git pull origin 2>&1 >/dev/null
+	else
+		git clone --shared --no-checkout $GIT $BUILD/.src 2>&1 >/dev/null
+	fi
+	
+	if [ $? != 0 ]; then
+    	__error "Failed to download $GIT into $BUILD/.src"
+    	return 1
+    fi
+
+	__post update $1
+
+	return 0
+}
+
+__validate() 
+{
+	cd $BUILD/.src 2>/dev/null
+
+	if [ $? == 0 ]; then
+		branches=$(git branch -a 2>/dev/null)
+		while read -r line
+		do
+			if [[ $line =~ remotes/$UPSTREAM/$1 ]] ||
+			   [[ $line =~ remotes/$UPSTREAM/PHP-$1 ]]; then
+			    OIFS=$IFS
+			    IFS="/"
+			    chunk=($line)
+			    IFS=$OIFS
+			    echo ${chunk[2]}
+			    return 0
+			fi
+		done <<< "$branches"
+	fi
+	
+	return 1
+}
+
+__checkout()
+{
+	__pre checkout $1
+	
+	__msg "Checking out $1 in $BUILD/$1"
+	
+	BRANCH=$(__validate $1)
+
+	if [ $? != 0 ]; then
+		__error "Checkout of $1 in $BUILD/$1 failed, the branch $UPSTREAM/$1 could not be found"
+		exit
+	fi
+
+	if [ ! -f $BUILD/$1/checkout ]; then
+		if [ -d $BUILD/$1 ]; then
+			rm -rf $BUILD/$1 2>&1 >/dev/null
+		fi
+		
+		git-new-workdir $BUILD/.src $BUILD/$1 2>&1 >/dev/null
+		
+		if [ $? != 0 ]; then
+			__error "Checkout of $1 in $BUILD/$1 failed, new work directory failed"
+			return 30
+		fi
+
+		cd $BUILD/$1
+
+		git checkout $UPSTREAM/$BRANCH 2>&1 >/dev/null
+		
+		if [ $? != 0 ]; then
+			__error "Checkout of $1 in $BUILD/$1 failed, checkout did not complete"
+			return 30
+		fi
+
+		touch $BUILD/$1/checkout
+	else
+		cd $BUILD/$1
+		
+		git pull $UPSTREAM $BRANCH 2>&1 >/dev/null
+		
+		if [ $? != 0 ]; then
+			__error "Update of $1 in $BUILD/$1 failed, update did not complete"
+			return 30
+		fi
+	fi
+	
+	__post checkout $1
+	
+	return 0
+}
+
+__check()
+{
+	__pre check $1 $2 $3
+	
+	__msg "Checking libraries from $LIBS are present"
+	
+	while read lib
+	do
+		if [[ $lib != dnl* ]]; then
+			found=$(find /usr/lib* -name "$lib" 2>/dev/null | head -n 1)
+			if [[ -z $found ]]; then
+				__error "Failed to find $lib library in /usr/lib*"
+				return 20
+			fi
+		fi
+	done < $LIBS
+	
+	__post check $1 $2 $3
+	
+	return 0
+}
+
+__clean()
+{
+	__pre clean $1 $2 $3
+	
+	__msg "Cleaning $BUILD/$1 for $2 $3"
+	
+	if [ -f $BUILD/$1/Makefile ]; then
+		make distclean 2>&1 >/dev/null
+	fi
+	
+	sh vcsclean 2>&1 >/dev/null
+
+	__post clean $1 $2 $3
+	
+	return 0
+}
+
+__buildconf()
+{
+	__pre buildconf $1 $2 $3
+
+	__msg "Initializing $1 $2 $3 in $BUILD/$1"
+	
+	./buildconf --force 2>&1 > $BUILD/$1/buildconf-$2-$3.log
+	
+	if [ $? != 0 ]; then
+		__error "Failed to initialize $1 $2 $3 in $BUILD/$1, see $BUILD/$1/buildconf-$2-$3.log"
+		return 2
+	fi
+
+	__post buildconf $1 $2 $3
+
+	return 0
+}
+
+__configure()
+{
+	__pre configure $1 $2 $3
+
+	__msg "Configuring $1 $2 $3 in $BUILD/$1"
+	
+	cd $BUILD/$1 && './configure' \
+		--prefix=$TARGET/$1/$2/$3 \
+		--with-config-file-scan-dir=$TARGET/$1/$2/$3/modules.d \
+		--with-config-file-path=$TARGET/$1/$2/$3 \
+		--bindir=$TARGET/$1/$2/$3/bin \
+		--sbindir=$TARGET/$1/$2/$3/bin \
+		$(__defaults) $(__flags $2 $3) 2>&1 >$BUILD/$1/configure-$2-$3.log
+	
+	if [ $? != 0 ]; then
+		__error "Failed to configure $1 $2 $3 in $BUILD/$1, see $BUILD/$1/configure-$2-$3.log"
+		return 3
+	fi
+
+	__post configure $1 $2 $3
+
+	return 0
+}
+
+__make()
+{
+	__pre make $1 $2 $3
+
+	__msg "Making $1 $2 $3 in $BUILD/$1"
+	
+	make -j8 -s 2>&1 >$BUILD/$1/make-$2-$3.log
+	if [ $? != 0 ]; then
+		__error "Failed to build $1 in $BUILD/$1, see $BUILD/$1/make-$2-$3.log"
+		return 4
+	fi
+
+	__post make $1 $2 $3
+
+	return 0
+}
+
+__install()
+{	
+	__pre install $1 $2 $3
+
+	__msg "Installing $1 $2 $3 from $BUILD/$1"
+	
+	make -s install 2>&1 >$BUILD/$1/install-$2-$3.log
+	if [ $? != 0 ]; then
+		__error "Failed to install $1 $2 $3 from $BUILD/$1, see $BUILD/$1/install-$2-$3.log"
+		return 5
+	fi
+	
+	rm -rf       /opt/php/$1/$2/$3/php.ini   2>&1 >/dev/null
+    cp      $INI /opt/php/$1/$2/$3/php.ini   2>&1 >/dev/null
+    rm -rf       /opt/php/$1/$2/$3/modules.d 2>&1 >/dev/null
+    mkdir        /opt/php/$1/$2/$3/modules.d 2>&1 >/dev/null
+
+	__post install $1 $2 $3
+
+	return 0
+}
+
+if [ "$UPDATE" != "no" ]; then
+	if [ "$STEP" == "no" ] || [ "$STEP" == "update" ]; then
+		__update $V
+		if [ $? != 0 ]; then
+			exit $?
+		fi
+	fi
+fi
+
+for V in $VERSION
+do
+	if [ "$STEP" == "no" ] || [ "$STEP" == "checkout" ]; then
+		__checkout $V
+		if [ $? != 0 ]; then
+			exit $?
+		fi
+	fi
+	
+	__change $BUILD/$V
+	
+	if [ $? != 0 ]; then
+		exit $?
+	fi
+	
+	for Z in $ZTS
+	do
+		for D in $DBG
+		do
+			if [ "$STEP" == "no" ] || [ "$STEP" == "check" ]; then
+				if [ "$CHECK" != "no" ]; then
+					__check $V $Z $D
+					if [ $? != 0 ]; then
+						exit $?
+					fi
+				fi
+			fi
+			
+			if [ "$STEP" == "no" ] || [ "$STEP" == "clean" ]; then
+				__clean $V $Z $D
+				if [ $? != 0 ]; then
+					exit $?
+				fi
+			fi
+
+			if [ "$STEP" == "no" ] || [ "$STEP" == "buildconf" ]; then
+				__buildconf $V $Z $D
+				if [ $? != 0 ]; then
+					exit $?
+				fi
+			fi
+
+			if [ "$STEP" == "no" ] || [ "$STEP" == "configure" ]; then
+				__configure $V $Z $D
+				if [ $? != 0 ]; then
+					exit $?
+				fi
+			fi
+
+			if [ "$STEP" == "no" ] || [ "$STEP" == "make" ]; then
+				__make $V $Z $D
+				if [ $? != 0 ]; then
+					exit $?
+				fi
+			fi
+
+			if [ "$STEP" == "no" ] || [ "$STEP" == "install" ]; then
+				__install $V $Z $D
+				if [ $? != 0 ]; then
+					exit $?
+				fi
+			fi
+			
+			[ "$ONE" == "no" ] || exit 0
+		done
+	done
+done

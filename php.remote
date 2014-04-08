@@ -1,0 +1,73 @@
+#!/bin/bash
+######################################################################
+# Add remotes to build patched PHP ... because PHP !                 #
+######################################################################
+BASE=$PWD
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+[ "x$BUILD" != "x"    ] || BUILD=$BASE/php-build
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+NAME=$1
+REMOTE=$2
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+USAGE="usage: php.remote name|list [remote]"
+if [ -z $NAME ]; then
+	echo $USAGE
+	exit 1
+fi
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+__msg() 
+{
+	echo -e "\033[0;32m${1}\033[0m"
+}
+
+__error()
+{
+	echo -e "\033[0;35m${1}\033[0m"
+}
+
+remotes=$(git --git-dir=$BUILD/.src/.git remote show 2>/dev/null)
+
+if [ $NAME == "list" ]; then
+	__msg "Available Remotes:"
+	for remote in $remotes
+	do
+		echo -e "\t$remote"
+	done
+	exit 0	
+elif [ -z $REMOTE ]; then
+	echo $USAGE
+	exit 1
+fi
+
+for remote in $remotes
+do
+	if [[ $remote = $NAME ]]; then
+		__error "Cannot add existing remote source $remote"
+		exit 1
+	fi
+done
+
+git --git-dir=$BUILD/.src/.git remote add $NAME $REMOTE
+
+if [ $? != 0 ]; then
+	__error "Failed to add remote $remote, git failed"
+	exit 1
+fi
+
+git --git-dir=$BUILD/.src/.git pull $NAME 2>/dev/null
+
+if [ $? != 0 ]; then
+	__error "Failed to pull from remote $NAME"
+	exit 1
+fi
+
+__msg "Added remote $NAME -> $REMOTE"
+exit 0

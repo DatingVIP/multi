@@ -1,0 +1,17 @@
+dnl
+dnl This file should contain the names of the libraries required to build PHP
+dnl 
+dnl Any line starting with dnl is ignored
+dnl
+dnl All libraries should be installed in /usr
+libz.so
+libxml2.so
+libmcrypt.so
+dnl libgd2 is required and requires all the libraries below it too ...
+libgd.so.*
+libXpm.so
+libvpx.so
+libjpeg.so
+libpng.so
+dnl
+libcurl.so
