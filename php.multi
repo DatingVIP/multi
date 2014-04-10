@@ -83,10 +83,9 @@ __pre()
 			fi
 			
 			SOURCE=$BUILD/$2 TARGET=$TARGET/$2/$3/$4 VERSION=$2 ZTS=$3 DBG=$4 source $DIR/$HOOK
-
+			
 			if [ $? != 0 ]; then
-				__error "Failed to execute $DIR/$HOOK"
-				return 6
+				return 1
 			fi
 		done
 	done
@@ -111,10 +110,9 @@ __post()
 			fi
 			
 			SOURCE=$BUILD/$2 TARGET=$TARGET/$2/$3/$4 VERSION=$2 ZTS=$3 DBG=$4 source $DIR/$HOOK
-
+			
 			if [ $? != 0 ]; then
-				__error "Failed to execute $DIR/$HOOK"
-				return 6
+				return 1
 			fi
 		done
 	done
@@ -126,14 +124,14 @@ __change()
 {
 	if [ ! -d $1 ]; then
 		__error "Failed to change to $1, not a directory"
-		return 10
+		return 1
 	fi
 	
 	cd $1 2>&1 >/dev/null
 	
 	if [ $? != 0 ]; then
 		__error "Failed to change to $1, error occured"
-		return 10
+		return 1
 	fi
 	
 	return 0
@@ -142,6 +140,10 @@ __change()
 __update () 
 {
 	__pre update $1
+
+	if [ $? != 0 ]; then
+		return 1
+	fi
 
 	__msg "Updating $BUILD/.src"
 	
@@ -159,7 +161,7 @@ __update ()
 
 	__post update $1
 
-	return 0
+	return $?
 }
 
 __validate() 
@@ -189,13 +191,17 @@ __checkout()
 {
 	__pre checkout $1
 	
+	if [ $? != 0 ]; then
+		return 1
+	fi
+	
 	__msg "Checking out $1 in $BUILD/$1"
 	
 	BRANCH=$(__validate $1)
 
 	if [ $? != 0 ]; then
 		__error "Checkout of $1 in $BUILD/$1 failed, the branch $UPSTREAM/$1 could not be found"
-		exit
+		return 1
 	fi
 
 	if [ ! -f $BUILD/$1/checkout ]; then
@@ -207,7 +213,7 @@ __checkout()
 		
 		if [ $? != 0 ]; then
 			__error "Checkout of $1 in $BUILD/$1 failed, new work directory failed"
-			return 30
+			return 1
 		fi
 
 		cd $BUILD/$1
@@ -216,7 +222,7 @@ __checkout()
 		
 		if [ $? != 0 ]; then
 			__error "Checkout of $1 in $BUILD/$1 failed, checkout did not complete"
-			return 30
+			return 1
 		fi
 
 		touch $BUILD/$1/checkout
@@ -227,18 +233,22 @@ __checkout()
 		
 		if [ $? != 0 ]; then
 			__error "Update of $1 in $BUILD/$1 failed, update did not complete"
-			return 30
+			return 1
 		fi
 	fi
 	
 	__post checkout $1
-	
-	return 0
+
+	return $?
 }
 
 __check()
 {
 	__pre check $1 $2 $3
+	
+	if [ $? != 0 ]; then
+		return 1
+	fi
 	
 	__msg "Checking libraries from $LIBS are present"
 	
@@ -248,19 +258,23 @@ __check()
 			found=$(find /usr/lib* -name "$lib" 2>/dev/null | head -n 1)
 			if [[ -z $found ]]; then
 				__error "Failed to find $lib library in /usr/lib*"
-				return 20
+				return 1
 			fi
 		fi
 	done < $LIBS
 	
 	__post check $1 $2 $3
 	
-	return 0
+	return $?
 }
 
 __clean()
 {
 	__pre clean $1 $2 $3
+	
+	if [ $? != 0 ]; then
+		return 1
+	fi
 	
 	__msg "Cleaning $BUILD/$1 for $2 $3"
 	
@@ -272,12 +286,16 @@ __clean()
 
 	__post clean $1 $2 $3
 	
-	return 0
+	return $?
 }
 
 __buildconf()
 {
 	__pre buildconf $1 $2 $3
+
+	if [ $? != 0 ]; then
+		return 1
+	fi
 
 	__msg "Initializing $1 $2 $3 in $BUILD/$1"
 	
@@ -285,17 +303,21 @@ __buildconf()
 	
 	if [ $? != 0 ]; then
 		__error "Failed to initialize $1 $2 $3 in $BUILD/$1, see $BUILD/$1/buildconf-$2-$3.log"
-		return 2
+		return 1
 	fi
 
 	__post buildconf $1 $2 $3
 
-	return 0
+	return $?
 }
 
 __configure()
 {
 	__pre configure $1 $2 $3
+
+	if [ $? != 0 ]; then
+		return 1
+	fi
 
 	__msg "Configuring $1 $2 $3 in $BUILD/$1"
 	
@@ -309,41 +331,49 @@ __configure()
 	
 	if [ $? != 0 ]; then
 		__error "Failed to configure $1 $2 $3 in $BUILD/$1, see $BUILD/$1/configure-$2-$3.log"
-		return 3
+		return 1
 	fi
 
 	__post configure $1 $2 $3
 
-	return 0
+	return $?
 }
 
 __make()
 {
 	__pre make $1 $2 $3
 
+	if [ $? != 0 ]; then
+		return 1
+	fi
+
 	__msg "Making $1 $2 $3 in $BUILD/$1"
 	
 	make -j8 -s 2>&1 >$BUILD/$1/make-$2-$3.log
 	if [ $? != 0 ]; then
 		__error "Failed to build $1 in $BUILD/$1, see $BUILD/$1/make-$2-$3.log"
-		return 4
+		return 1
 	fi
 
 	__post make $1 $2 $3
 
-	return 0
+	return $?
 }
 
 __install()
 {	
 	__pre install $1 $2 $3
-
+	
+	if [ $? != 0 ]; then
+		return 1
+	fi
+	
 	__msg "Installing $1 $2 $3 from $BUILD/$1"
 	
 	make -s install 2>&1 >$BUILD/$1/install-$2-$3.log
 	if [ $? != 0 ]; then
 		__error "Failed to install $1 $2 $3 from $BUILD/$1, see $BUILD/$1/install-$2-$3.log"
-		return 5
+		return 1
 	fi
 	
 	rm -rf       /opt/php/$1/$2/$3/php.ini   2>&1 >/dev/null
@@ -353,14 +383,14 @@ __install()
 
 	__post install $1 $2 $3
 
-	return 0
+	return $?
 }
 
 if [ "$UPDATE" != "no" ]; then
 	if [ "$STEP" == "no" ] || [ "$STEP" == "update" ]; then
 		__update $V
 		if [ $? != 0 ]; then
-			exit $?
+			exit 10
 		fi
 	fi
 fi
@@ -370,14 +400,14 @@ do
 	if [ "$STEP" == "no" ] || [ "$STEP" == "checkout" ]; then
 		__checkout $V
 		if [ $? != 0 ]; then
-			exit $?
+			exit 20
 		fi
 	fi
 	
 	__change $BUILD/$V
 	
 	if [ $? != 0 ]; then
-		exit $?
+		exit 30
 	fi
 	
 	for Z in $ZTS
@@ -388,7 +418,7 @@ do
 				if [ "$CHECK" != "no" ]; then
 					__check $V $Z $D
 					if [ $? != 0 ]; then
-						exit $?
+						exit 40
 					fi
 				fi
 			fi
@@ -396,35 +426,35 @@ do
 			if [ "$STEP" == "no" ] || [ "$STEP" == "clean" ]; then
 				__clean $V $Z $D
 				if [ $? != 0 ]; then
-					exit $?
+					exit 50
 				fi
 			fi
 
 			if [ "$STEP" == "no" ] || [ "$STEP" == "buildconf" ]; then
 				__buildconf $V $Z $D
 				if [ $? != 0 ]; then
-					exit $?
+					exit 60
 				fi
 			fi
 
 			if [ "$STEP" == "no" ] || [ "$STEP" == "configure" ]; then
 				__configure $V $Z $D
 				if [ $? != 0 ]; then
-					exit $?
+					exit 70
 				fi
 			fi
 
 			if [ "$STEP" == "no" ] || [ "$STEP" == "make" ]; then
 				__make $V $Z $D
 				if [ $? != 0 ]; then
-					exit $?
+					exit 80
 				fi
 			fi
 
 			if [ "$STEP" == "no" ] || [ "$STEP" == "install" ]; then
 				__install $V $Z $D
 				if [ $? != 0 ]; then
-					exit $?
+					exit 90
 				fi
 			fi
 			
