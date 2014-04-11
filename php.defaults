@@ -39,6 +39,7 @@ with-freetype-dir=/usr
 with-xpm-dir=/usr/lib64
 with-vpx-dir=/usr
 with-iconv-dir=/usr
+with-openssl
 with-pear
 dnl This libdir will obviously not be suitable on 32 bit systems
 with-libdir=lib64
