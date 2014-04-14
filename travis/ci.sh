@@ -9,6 +9,5 @@ sudo apt-get install -qq libmcrypt-dev libXpm-dev libpng-dev libjpeg-dev libvpx-
 mkdir /home/travis/build/DatingVIP/multi/php-build/master
 sudo  /home/travis/build/DatingVIP/multi/php.multi
 ###################################################################################
-# List all configurations
+# Travis won't let us source a list of environments ...
 ###################################################################################
-source /home/travis/build/DatingVIP/multi/php.env list
