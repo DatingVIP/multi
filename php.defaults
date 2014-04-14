@@ -26,6 +26,7 @@ enable-gd-native-ttf
 enable-tokenizer
 enable-hash
 enable-filter
+enable-fpm
 dnl
 with-zlib
 with-mysql=mysqlnd

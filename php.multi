@@ -389,6 +389,11 @@ __install()
 	return $?
 }
 
+if [ $(whoami) != "root" ]; then
+	__error "You must be root to run multi!"
+	exit 1
+fi
+
 if [ "$UPDATE" != "no" ]; then
 	if [ "$STEP" == "no" ] || [ "$STEP" == "update" ]; then
 		__update $V
