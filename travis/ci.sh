@@ -4,13 +4,11 @@
 ###################################################################################
 sudo apt-get install -qq libmcrypt-dev libXpm-dev libpng-dev libjpeg-dev libvpx-dev
 ###################################################################################
-CWD=$(pwd)
-###################################################################################
 # Run a test build of php-src/master in all configurations
 ###################################################################################
-mkdir  php-build/master
-sudo   $CWD/php.multi
+mkdir /home/travis/build/DatingVIP/multi/php-build/master
+sudo  /home/travis/build/DatingVIP/multi/php.multi
 ###################################################################################
 # List all configurations
 ###################################################################################
-source $CWD/php.env list
+source /home/travis/build/DatingVIP/multi/php.env list
