@@ -2,6 +2,8 @@ php.multi
 =========
 *Maintain multiple isolated builds and configurations of PHP ...*
 
+[![Build Status](https://travis-ci.org/DatingVIP/multi.svg?branch=master)](https://travis-ci.org/DatingVIP/multi)
+
 This repository contains a couple of scripts we, and you, can use to build PHP (of any version) and all of the extensions we require for running unit tests in all configurations.
 
 Usage
