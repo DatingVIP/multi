@@ -149,6 +149,7 @@ __update ()
 	
 	if [ -d "$BUILD/.src" ]; then
 		cd "$BUILD/.src"
+		git reset --hard 2>&1 >/dev/null
 		git pull origin 2>&1 >/dev/null
 	else
 		git clone --shared --no-checkout $GIT $BUILD/.src 2>&1 >/dev/null
