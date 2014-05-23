@@ -13,7 +13,7 @@ if [ $? != 0 ]; then
 		
 		__msg "Fetching git-new-workdir helper"
 		
-		wget https://raw.githubusercontent.com/git/git/master/contrib/workdir/git-new-workdir -O $BASE/bin/git-new-workdir 2>&1 >/dev/null
+		curl -S https://raw.githubusercontent.com/git/git/master/contrib/workdir/git-new-workdir > $BASE/bin/git-new-workdir
 		if [ $? != 0 ]; then
 			__error "Failed to download git-new-workdir"
 			return 1
