@@ -14,6 +14,7 @@ BASE=$PWD
 [ "x$DEFAULTS" != "x" ] || DEFAULTS=$BASE/php.defaults
 [ "x$GIT" != "x"      ] || GIT=git://git.php.net/php-src.git
 [ "x$UPSTREAM" != "x" ] || UPSTREAM=origin
+[ "x$CORES" != "x"    ] || CORES=$(grep -c ^processor /proc/cpuinfo)
 ######################################################################
 #  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
 ######################################################################
@@ -351,9 +352,9 @@ __make()
 		return 1
 	fi
 
-	__msg "Making $1 $2 $3 in $BUILD/$1/$2/$3"
-	
-	make -j8 -s 2>&1 >$BUILD/$1/$2/$3/make.log
+	__msg "Making (-j$CORES) $1 $2 $3 in $BUILD/$1/$2/$3"
+
+	make -j$CORES -s 2>&1 >$BUILD/$1/$2/$3/make.log
 	if [ $? != 0 ]; then
 		__error "Failed to build $1 in $BUILD/$1/$2/$3, see $BUILD/$1/$2/$3/make.log"
 		return 1

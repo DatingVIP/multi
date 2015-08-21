@@ -44,7 +44,8 @@ The following environment variables effect the behaviour of ```php.multi```:
  - DEFAULTS[=multi/php.defaults]       - set the full path to the configuration defaults file
  - LIBS[=multi/php.libs]               - set the full path to the required libraries file
  - GIT[=git://git.php.net/php-src.git] - set the git repository to use as master source tree
- - UPSTREAM[=origin]				   - set the default upstream
+ - UPSTREAM[=origin]		   - set the default upstream
+ - CORES[=8]			   - set the number of available cores for make
 
 Steps
 =====
