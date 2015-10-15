@@ -21,7 +21,7 @@ then
 		return 1
 	fi
 else
-	__msg "Installing pthreads for $VERSION $ZTS $DBG from github"
+	__msg "Installing uopz for $VERSION $ZTS $DBG from github"
 	git clone https://github.com/krakjoe/uopz		2>&1 >/dev/null
 	cd uopz
 	git checkout seven
