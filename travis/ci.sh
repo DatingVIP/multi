@@ -2,7 +2,7 @@
 ###################################################################################
 #  First install prerequisite libraries for php.defaults not available on travis  #
 ###################################################################################
-sudo apt-get install -qq libmcrypt-dev libXpm-dev libpng-dev libjpeg-dev libvpx-dev
+sudo apt-get install -qq libmcrypt-dev libXpm-dev libpng-dev libjpeg-dev libvpx-dev re2c libmemcached-dev
 ###################################################################################
 # Run a test build of php-src/master in all configurations
 ###################################################################################
