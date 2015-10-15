@@ -4,12 +4,12 @@ vernum=$($TARGET/bin/php-config --vernum)
 if [ $vernum -lt 70000 ];
 then
 	__msg "Installing uopz for $VERSION $ZTS $DBG from PECL"
-	$TARGET/bin/pecl uninstall uopz                             2>&1 >/dev/null
-	$TARGET/bin/pecl install uopz                               2>&1 >/dev/null
+	$TARGET/bin/pecl uninstall uopz-2.0.6                       2>&1 >/dev/null
+	$TARGET/bin/pecl install uopz-2.0.6                         2>&1 >/dev/null
 
 	if [ $? -eq 0 ]; then
 		extension_dir=$($TARGET/bin/php-config --extension-dir)
-	
+
 		if [ -d $extension_dir ]; then
 			echo zend_extension=$extension_dir/uopz.so        >>$TARGET/php.ini
 		else
