@@ -21,8 +21,21 @@ then
 		return 1
 	fi
 else
-	__error "Cannot install uopz for $VERSION $ZTS $DBG"
-	return 1
+	__msg "Installing pthreads for $VERSION $ZTS $DBG from github"
+	git clone https://github.com/krakjoe/uopz		2>&1 >/dev/null
+	cd uopz
+	git checkout seven
+	$TARGET/bin/phpize					2>&1 >/dev/null
+	./configure --with-php-config=$TARGET/bin/php-config	2>&1 >/dev/null
+	make install						2>&1 >/dev/null
+
+	extension_dir=$($TARGET/bin/php-config --extension-dir)
+	if [ -d $extension_dir ]; then
+		echo zend_extension=$extension_dir/uopz.so        >>$TARGET/php.ini
+	else
+		echo zend_extension=uopz.so                       >>$TARGET/php.ini
+	fi
+	echo uopz.overloads=1                                 >>$TARGET/php.ini
 fi
 
 return 0
