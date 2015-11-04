@@ -9,7 +9,7 @@ git clone https://github.com/php-memcached-dev/php-memcached		2>&1 >/dev/null
 cd php-memcached
 git checkout $branch
 $TARGET/bin/phpize					2>&1 >/dev/null
-./configure --with-php-config=$TARGET/bin/php-config	2>&1 >/dev/null
+./configure --with-php-config=$TARGET/bin/php-config --disable-memcached-sasl 2>&1 >/dev/null
 make install						2>&1 >/dev/null
 
 if [ $? -eq 0 ]; then
