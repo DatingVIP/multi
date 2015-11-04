@@ -1,3 +1,8 @@
 language: c
 
+before_install:
+ - sudo add-apt-repository ppa:travis-ci/memcached-sasl
+ - sudo apt-get update -qq 
+ - sudo apt-get install -qq libmcrypt-dev libXpm-dev libpng-dev libjpeg-dev libvpx-dev re2c libmemcached-dev
+
 script: ./travis/ci.sh
