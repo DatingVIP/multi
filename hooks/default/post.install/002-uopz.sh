@@ -24,18 +24,18 @@ else
 	__msg "Installing uopz for $VERSION $ZTS $DBG from github"
 	git clone https://github.com/krakjoe/uopz		2>&1 >/dev/null
 	cd uopz
-	git checkout seven
+	git checkout master
 	$TARGET/bin/phpize					2>&1 >/dev/null
 	./configure --with-php-config=$TARGET/bin/php-config	2>&1 >/dev/null
 	make install						2>&1 >/dev/null
 
 	extension_dir=$($TARGET/bin/php-config --extension-dir)
 	if [ -d $extension_dir ]; then
-		echo zend_extension=$extension_dir/uopz.so        >>$TARGET/php.ini
+		echo extension=$extension_dir/uopz.so        >>$TARGET/php.ini
 	else
-		echo zend_extension=uopz.so                       >>$TARGET/php.ini
+		echo extension=uopz.so                       >>$TARGET/php.ini
 	fi
-	echo uopz.overloads=1                                 >>$TARGET/php.ini
+	echo uopz.overloads=1                            >>$TARGET/php.ini
 fi
 
 return 0
