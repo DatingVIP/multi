@@ -1,8 +1,8 @@
 #!/bin/bash
 vernum=$($TARGET/bin/php-config --vernum)
 [[ $vernum -lt 70000 ]] &&
-	branch="simplify" ||
-	branch="seven"
+	branch="PHP5" ||
+	branch="master"
 
 __msg "Installing apcu for $VERSION $ZTS $DBG from github"
 git clone https://github.com/krakjoe/apcu		2>&1 >/dev/null
