@@ -180,10 +180,23 @@ __validate()
 			    IFS="/"
 			    chunk=($line)
 			    IFS=$OIFS
-			    echo ${chunk[2]}
+			    echo $2/${chunk[2]}
 			    return 0
 			fi
 		done <<< "$branches"
+		tags=$(git tag 2>/dev/null)
+		while read -r line
+		do
+			if [[ $line =~ $1 ]] ||
+			   [[ $line =~ PHP-$1 ]]; then
+			    OIFS=$IFS
+			    IFS="/"
+			    chunk=($line)
+			    IFS=$OIFS
+			    echo ${chunk[2]}
+			    return 0
+			fi
+		done <<< "$tags"
 	fi
 	
 	return 1
@@ -199,7 +212,7 @@ __checkout()
 	
 	__msg "Checking out $1 in $BUILD/$1/$2/$3"
 	
-	BRANCH=$(__validate $1)
+	BRANCH=$(__validate $1 $UPSTREAM)
 
 	if [ $? != 0 ]; then
 		__error "Checkout of $1 in $BUILD/$1/$2/$3 failed, the branch $UPSTREAM/$1 could not be found"
@@ -223,7 +236,7 @@ __checkout()
 
 		cd $BUILD/$1/$2/$3
 
-		git checkout $UPSTREAM/$BRANCH 2>&1 >/dev/null
+		git checkout $BRANCH 2>&1 >/dev/null
 		
 		if [ $? != 0 ]; then
 			__error "Checkout of $1 in $BUILD/$1/$2/$3 failed, checkout did not complete"
@@ -234,7 +247,8 @@ __checkout()
 	else
 		cd $BUILD/$1/$2/$3
 		
-		git pull $UPSTREAM $BRANCH 2>&1 >/dev/null
+        git fetch
+		git reset --hard $BRANCH 2>&1 >/dev/null
 		
 		if [ $? != 0 ]; then
 			__error "Update of $1 in $BUILD/$1/$2/$3 failed, update did not complete"
