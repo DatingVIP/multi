@@ -150,8 +150,8 @@ __update ()
 	
 	if [ -d "$BUILD/.src" ]; then
 		cd "$BUILD/.src"
-		git reset --hard 2>&1 >/dev/null
-		git pull origin 2>&1 >/dev/null
+		git reset --hard origin 2>&1 >/dev/null
+		git pull origin -ff 2>&1 >/dev/null
 	else
 		git clone --shared --no-checkout $GIT $BUILD/.src 2>&1 >/dev/null
 	fi
@@ -188,12 +188,12 @@ __validate()
 		while read -r line
 		do
 			if [[ $line =~ $1 ]] ||
-			   [[ $line =~ PHP-$1 ]]; then
+			   [[ $line =~ php-$1 ]]; then
 			    OIFS=$IFS
 			    IFS="/"
 			    chunk=($line)
 			    IFS=$OIFS
-			    echo ${chunk[2]}
+				echo ${chunk[0]}
 			    return 0
 			fi
 		done <<< "$tags"
@@ -236,7 +236,7 @@ __checkout()
 
 		cd $BUILD/$1/$2/$3
 
-		git checkout $BRANCH 2>&1 >/dev/null
+		git checkout $BRANCH
 		
 		if [ $? != 0 ]; then
 			__error "Checkout of $1 in $BUILD/$1/$2/$3 failed, checkout did not complete"
@@ -246,9 +246,9 @@ __checkout()
 		touch $BUILD/$1/$2/$3/checkout
 	else
 		cd $BUILD/$1/$2/$3
-		
+
         git fetch
-		git reset --hard $BRANCH 2>&1 >/dev/null
+		git pull -ff origin $BRANCH
 		
 		if [ $? != 0 ]; then
 			__error "Update of $1 in $BUILD/$1/$2/$3 failed, update did not complete"
