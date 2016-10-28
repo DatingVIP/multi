@@ -60,88 +60,102 @@ __error()
 
 __msg()
 {
-		echo -en $GREEN
+	echo -en $GREEN
         echo -n $1
         echo -e $CEND
 }
 
 __success()
 {
-		echo -en $PURPLE
+	echo -en $PURPLE
         echo -n $1
         echo -e $CEND
 }
 
-for VERSION in $(ls $TARGET)
+for V in $(ls $TARGET)
 do
-	for ZTS in $(ls $TARGET/$VERSION)
-	do
-		for DBG in $(ls $TARGET/$VERSION/$ZTS)
-		do
-			if [ -d $TARGET/$VERSION/$ZTS/$DBG ]; then
-				if [ -f $TARGET/$VERSION/$ZTS/$DBG/bin/pecl ]; then
+	if [ "x$VERSION" != "x" ]; then
+		if [ "x$V" != "x$VERSION" ]; then
+			continue
+		fi
+	fi
 
-					__begin "Starting download of $EXT for $VERSION $ZTS $DBG"
+	SELECTED=$V;
+
+	for ZTS in $(ls $TARGET/$SELECTED)
+	do
+		for DBG in $(ls $TARGET/$SELECTED/$ZTS)
+		do
+			if [ -d $TARGET/$SELECTED/$ZTS/$DBG ]; then
+				if [ -f $TARGET/$SELECTED/$ZTS/$DBG/bin/pecl ]; then
+
+					__begin "Starting download of $EXT for $SELECTED $ZTS $DBG"
 
 					cd $DIR
 
 					rm -rf $EXT >/dev/null				
 
-					$TARGET/$VERSION/$ZTS/$DBG/bin/pecl bundle $EXT >/dev/null
+					$TARGET/$SELECTED/$ZTS/$DBG/bin/pecl bundle $EXT >/dev/null
 
 					if [ $? -eq 0 ]; then
-						cd $EXT && $TARGET/$VERSION/$ZTS/$DBG/bin/phpize >/dev/null
+						cd $EXT && $TARGET/$SELECTED/$ZTS/$DBG/bin/phpize >/dev/null
 
 						if [ $? -ne 0 ]; then
-							__error "Could not phpize $EXT for $VERSION $ZTS $DBG"
+							__error "Could not phpize $EXT for $SELECTED $ZTS $DBG"
 							continue
 						fi
 
 						if [ "x$CONFIGURE" != "x" ]; then
-							__msg "Starting configure ($CONFIGURE) for $VERSION $ZTS $DBG"
+							__msg "Starting configure ($CONFIGURE) for $SELECTED $ZTS $DBG"
 						else
-							__msg "Starting configure for $VERSION $ZTS $DBG"
+							__msg "Starting configure for $SELECTED $ZTS $DBG"
 						fi
 						
-						./configure --with-php-config=$TARGET/$VERSION/$ZTS/$DBG/bin/php-config $CONFIGURE >/dev/null
+						./configure --with-php-config=$TARGET/$SELECTED/$ZTS/$DBG/bin/php-config $CONFIGURE >/dev/null
 						if [ $? -ne 0 ]; then
-							__error "Could not configure $EXT for $VERSION $ZTS $DBG"
+							__error "Could not configure $EXT for $SELECTED $ZTS $DBG"
 							continue
 						fi
 
-						__msg "Starting make for $EXT for $VERSION $ZTS $DBG"
+						__msg "Starting make for $EXT for $SELECTED $ZTS $DBG"
 
 						make -j4 1>2 2&>/dev/null
 						if [ $? -ne 0 ]; then
-							__error "Could not make for $EXT for $VERSION $ZTS $DBG"
+							__error "Could not make for $EXT for $SELECTED $ZTS $DBG"
 							continue
 						fi
 
-						__msg "Starting install for $EXT for $VERSION $ZTS $DBG"
+						__msg "Starting install for $EXT for $SELECTED $ZTS $DBG"
 
 						make install 1>2 2&>/dev/null
 						if [ $? -ne 0 ]; then
-							__error "Could not install $EXT for $VERSION $ZTS $DBG"
+							__error "Could not install $EXT for $SELECTED $ZTS $DBG"
 							continue
 						fi
 
-						__success "Install of $EXT complete for $VERSION $ZTS $DBG"
+						__success "Install of $EXT complete for $SELECTED $ZTS $DBG"
 
-						echo $INI > $TARGET/$VERSION/$ZTS/$DBG/modules.d/$SONAME.ini
+						echo $INI > $TARGET/$SELECTED/$ZTS/$DBG/modules.d/$SONAME.ini
 					else
-						__error "PECL could not download $EXT for $VERSION $ZST $DBG"
+						__error "PECL could not download $EXT for $SELECTED $ZST $DBG"
 						continue
 					fi
 				else
-					__error "PECL not installed for $VERSION $ZTS $DBG"
+					__error "PECL not installed for $SELECTED $ZTS $DBG"
 					continue
 				fi
 			else
-				__error "No installation for $VERSION $ZTS $DBG"
+				__error "No installation for $SELECTED $ZTS $DBG"
 				continue
 			fi
 		done
 	done
+
+	if [ "x$VERSION" != "x" ]; then
+		if [ "x$V" == "x$VERSION" ]; then
+			break
+		fi
+	fi
 done
 
 cd $DIR
