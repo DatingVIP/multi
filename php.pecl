@@ -1,0 +1,147 @@
+######################################################################
+# Install a PECL extension in environments built with php.multi      #
+######################################################################
+[ "x$TARGET" != "x"   ] || TARGET=/opt/php
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+EXT=$1
+CONFIGURE=$2
+if [ "x$3" != "x" ]; then
+	SONAME=$3
+else
+	SONAME=$(echo $EXT | tr '[:upper:]' '[:lower:]')
+fi
+if [ "x$4" != "x" ]; then
+	INI=$4
+else
+	INI="extension=$SONAME.so"
+fi
+DIR=$PWD
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+USAGE="usage: source php.pecl extension [configure [ soname [ini]]]"
+if [ -z $EXT ]; then
+        echo $USAGE
+        return
+fi
+######################################################################                                                                                                                                                                                                         
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #                                                                                                                                                                                                         
+######################################################################                                                                                                                                                                                                         
+DEFAULTS=/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:/bin:/sbin                                                                                                                                                                                                          
+######################################################################                                                                                                                                                                                                         
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #                                                                                                                                                                                                         
+######################################################################                                                                                                                                                                                                         
+RED="\033[1;31m"                                                                                                                                                                                                                                                               
+GREEN="\033[0;32m"                                                                                                                                                                                                                                                             
+BGREEN="\033[1;32m"                                                                                                                                                                                                                                                            
+BLUE="\033[1;34m"                                                                                                                                                                                                                                                              
+PURPLE="\033[0;35m"                                                                                                                                                                                                                                                            
+WHITE="\033[0;37m"                                                                                                                                                                                                                                                             
+BWHITE="\033[1;37m"                                                                                                                                                                                                                                                            
+CEND="\033[0m"                                                                                                                                                                                                                                                                 
+######################################################################
+#  STOP EDITING STOP EDITING STOP EDITING STOP EDITING STOP EDITING  #
+######################################################################
+__begin()
+{
+        echo -en $BLUE
+        echo -n $1
+        echo -e $CEND
+}
+
+__error()
+{
+        echo -en $RED
+        echo -n $1
+        echo -e $CEND
+}
+
+__msg()
+{
+		echo -en $GREEN
+        echo -n $1
+        echo -e $CEND
+}
+
+__success()
+{
+		echo -en $PURPLE
+        echo -n $1
+        echo -e $CEND
+}
+
+for VERSION in $(ls $TARGET)
+do
+	for ZTS in $(ls $TARGET/$VERSION)
+	do
+		for DBG in $(ls $TARGET/$VERSION/$ZTS)
+		do
+			if [ -d $TARGET/$VERSION/$ZTS/$DBG ]; then
+				if [ -f $TARGET/$VERSION/$ZTS/$DBG/bin/pecl ]; then
+
+					__begin "Starting download of $EXT for $VERSION $ZTS $DBG"
+
+					cd $DIR
+
+					rm -rf $EXT >/dev/null				
+
+					$TARGET/$VERSION/$ZTS/$DBG/bin/pecl bundle $EXT >/dev/null
+
+					if [ $? -eq 0 ]; then
+						cd $EXT && $TARGET/$VERSION/$ZTS/$DBG/bin/phpize >/dev/null
+
+						if [ $? -ne 0 ]; then
+							__error "Could not phpize $EXT for $VERSION $ZTS $DBG"
+							continue
+						fi
+
+						if [ "x$CONFIGURE" != "x" ]; then
+							__msg "Starting configure ($CONFIGURE) for $VERSION $ZTS $DBG"
+						else
+							__msg "Starting configure for $VERSION $ZTS $DBG"
+						fi
+						
+						./configure --with-php-config=$TARGET/$VERSION/$ZTS/$DBG/bin/php-config $CONFIGURE >/dev/null
+						if [ $? -ne 0 ]; then
+							__error "Could not configure $EXT for $VERSION $ZTS $DBG"
+							continue
+						fi
+
+						__msg "Starting make for $EXT for $VERSION $ZTS $DBG"
+
+						make -j4 1>2 2&>/dev/null
+						if [ $? -ne 0 ]; then
+							__error "Could not make for $EXT for $VERSION $ZTS $DBG"
+							continue
+						fi
+
+						__msg "Starting install for $EXT for $VERSION $ZTS $DBG"
+
+						make install 1>2 2&>/dev/null
+						if [ $? -ne 0 ]; then
+							__error "Could not install $EXT for $VERSION $ZTS $DBG"
+							continue
+						fi
+
+						__success "Install of $EXT complete for $VERSION $ZTS $DBG"
+
+						echo $INI > $TARGET/$VERSION/$ZTS/$DBG/modules.d/$SONAME.ini
+					else
+						__error "PECL could not download $EXT for $VERSION $ZST $DBG"
+						continue
+					fi
+				else
+					__error "PECL not installed for $VERSION $ZTS $DBG"
+					continue
+				fi
+			else
+				__error "No installation for $VERSION $ZTS $DBG"
+				continue
+			fi
+		done
+	done
+done
+
+cd $DIR
