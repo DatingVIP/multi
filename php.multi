@@ -180,7 +180,7 @@ __validate()
 			    IFS="/"
 			    chunk=($line)
 			    IFS=$OIFS
-			    echo $2/${chunk[2]}
+			    echo ${chunk[2]}
 			    return 0
 			fi
 		done <<< "$branches"
