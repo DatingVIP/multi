@@ -20,3 +20,5 @@ dnl with-iconv requires
 libiconv.so.*
 dnl with-gettext requires
 libgettextlib.so
+dnl with-tidy requires
+libtidy.so
