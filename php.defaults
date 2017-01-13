@@ -21,6 +21,7 @@ enable-fileinfo
 enable-session
 enable-simplexml
 enable-opcache
+enable-opcache-jit
 enable-ctype
 enable-gd-native-ttf
 enable-tokenizer
