@@ -16,3 +16,4 @@ dnl
 libcurl.so.*
 dnl
 libxml2.so.*
+libiconv.so.*
