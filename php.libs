@@ -16,4 +16,7 @@ dnl
 libcurl.so.*
 dnl
 libxml2.so.*
+dnl with-iconv requires
 libiconv.so.*
+dnl with-gettext requires
+libgettextlib.so

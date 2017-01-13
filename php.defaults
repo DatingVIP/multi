@@ -42,6 +42,7 @@ with-xpm-dir=/usr/lib64
 with-vpx-dir=/usr
 with-iconv=/usr
 with-iconv-dir=/usr
+with-gettext=/usr
 with-openssl
 with-pear
 dnl This libdir will obviously not be suitable on 32 bit systems
