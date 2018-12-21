@@ -1,8 +1,6 @@
 #!/bin/bash
 vernum=$($TARGET/bin/php-config --vernum)
-[[ $vernum -lt 70000 ]] &&
-	branch="master" ||
-	 branch="php7"
+branch="master"
 
 __msg "Installing memcached for $VERSION $ZTS $DBG from github"
 git clone https://github.com/php-memcached-dev/php-memcached		2>&1 >/dev/null
